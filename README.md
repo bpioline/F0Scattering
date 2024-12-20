@@ -3,4 +3,4 @@ Mathematica package and worksheets for investigating the scattering diagram of l
 
 Based on [arXiv:2412.07680] by Bruno Le Floch, Boris Pioline and Rishi Raj
 
-Dec 11/24: Further material will be added in the next few days 
+

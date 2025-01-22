@@ -3,4 +3,6 @@ Mathematica package and worksheets for investigating the scattering diagram of l
 
 Based on [arXiv:2412.07680] by Bruno Le Floch, Boris Pioline and Rishi Raj
 
+See https://github.com/bpioline/P2Scattering for similar package for local P2.
+
 

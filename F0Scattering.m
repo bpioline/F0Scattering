@@ -4,7 +4,7 @@
 (*Scattering diagram for local F0,F1 - routines*)
 
 
-Print["F0Scattering 1.17, Nov 28, 2024 - A package for evaluating DT invariants on F0,F1"];
+Print["F0Scattering 1.18, June 22, 2025 - A package for evaluating DT invariants on F0,F1"];
 
 
 BeginPackage["IndexVars`"];
@@ -70,6 +70,7 @@ DiscF0::usage = "DiscF0[{r_,d1_,d2_,ch2_},m_:0] computes the discriminant ((d1-d
 DimGieseker::usage = "DimGieseker[{r_,d1_,d2_,ch2_}]Computes expected dimension of moduli space of Gieseker-semi stable sheaves";
 repChO::usage = "Replaces Ch[m1_,m2_] by string O(m1,m2)";
 repCh::usage = "Replacement Ch[m1,m2] by the charge vector {1,m1,m2,m1 m2}";
+ChernToCh::usage="ChernToCh[f_] replaces {r,d1,d2,ch2} by r Ch[d1/r,d2/r] whenever the discriminant vanishes";
 GenSlope::usage = "GenSlope[{r_,d1_,d2_,ch2_},m_] computes the slope (d1+d2)/(2r) if r<>0, or (ch2-m d2)/d1+d2) if r=0";
 MutateCollection::usage="MutateCollection[Coll_,klist_] acts on the list of Chern vectors Coll by the successive mutations in klist, which is a list of {node number,sign}, with sign=1 for right mutation, -1 for left mutation";
 ExtFromStrong::usage="ExtFromStrong[Coll_] computes the Chern vectors of the objects in the Ext collection dual to a strong collection"; 
@@ -108,7 +109,8 @@ ContractInitialRays::usage="ContractInitialRays[Trees_,m_] replaces primary scat
 DecontractInitialRays::usage="DecontractInitialRays[Trees_,m_] replaces initial rays in LV tree by initial rays in LV+eps scattering diagram";
 KroneckerDims::usage="KroneckerDims[m_,Nn_] gives the list of populated dimension vectors {n1,n2} for Kronecker quiver with m arrows, with (n1,n2) coprime and 0<=n1,n2<=Nn"; 
 ConstructLVDiagram::usage="ConstructLVDiagram[smin_,smax_,phimax_,Nm_,m_,ListRays_] constructs the LV scattering diagram with initial rays in the interval [smin,smax], cost function up to phi, scattering products up to (Nm,Nm) at each intersection; m is assumed to be real; The output consists of a list of  {charge, {x,y}, parent1, parent2,n1,n2 }; If ListRays is not empty, then uses it as initial rays."
-LVTreesFromListRays::usage="lVTreesFromListRays[ListRays_,{r_,d1_,d2_,ch2_},m_] extract the trees with given charge in the List of rays,  by ConstructLVDiagram";
+LVTreesFromListRays::usage="lVTreesFromListRays[ListRays_,{r_,d1_,d2_,ch2_},m_] extract the trees with given charge in the List of rays, constructed by ConstructLVDiagram";
+CostPhi::usage="CostPhi[{r_,d1_,d2_,ch2_},s_,m_]:=d1+d2-r(2s+m)";
 
 
 McKayrep::usage = "replaces {n1_,n2_,n3_,n4_} by n1 \!\(\*SubscriptBox[\(\[Gamma]\), \(1\)]\)+n2  \!\(\*SubscriptBox[\(\[Gamma]\), \(\(2\)\(\\\ \)\)]\)+n3 \!\(\*SubscriptBox[\(\[Gamma]\), \(3\)]\)+n4 \!\(\*SubscriptBox[\(\[Gamma]\), \(4\)]\)";
@@ -139,12 +141,13 @@ McKayScattGraph::usage = "McKayScattGraph[Tree_,m_]extracts the list of vertices
 McKayScattDiag::usage= "McKayScattDiag[TreeList_,m_] draws McKay scattering diagram in (u,v) plane for each tree in Treelist"; 
 McKayScattDiagInternal::usage= "McKayScattDiagInternal[Tree_,m_] constructs total charge, coordinate of root and list of line segments in (u,v) coordinates; used by McKayScattDiag"; 
 McKayIntersectRays::usage = "McKayIntersectRays[{n1_,n2_,n3_,n4_},{nn1_,nn2_,nn3_,nn4_},m_] returns intersection point (u,v) of two rays, or {} if they are collinear;
-  McKayIintersectRays[{n1_,n2_,n3_},{nn1_,nn2_,nn3_},z_,zz,m_]returns intersection point (u,v) of two rays if the intersection point lies upward from z and z', or {} otherwise";
+  McKayIintersectRays[{n1_,n2_,n3_,n4_},{nn1_,nn2_,nn3_,nn4_},z_,zz,m_]returns intersection point (u,v) of two rays if the intersection point lies upward from z and z', or {} otherwise";
+McKayIntersectRaysNoTest::usage = "McKayIntersectRays[{n1_,n2_,n3_,n4_},{nn1_,nn2_,nn3_,nn4_},,z_,zz,m_] returns intersection point (u,v) of two rays if the intersection point lies strictly upward from z and z', or {} otherwise, without testing non-vanishing of DSZ product";
 McKayInitialRays::usage="McKayInitialRays[L_,m_] draws the initial rays in (u',v') plane, rescaling each arrow by a factor of L";
 McKayScattIndexImproved::usage="McKayScattIndexImproved[TreeList_, opt_] computes the index for each tree in TreeList, taking care of non-primitive internal states";
 McKayScattIndexImprovedInternal::usage="McKayScattIndexImprovedInternal[Tree_, opt_] computes the index for Tree, taking care of non-primitive internal states";
 FOmbToOm::usage="FOmbToOm[OmbList_] computes integer index from list of rational indices, used internally by FScattIndex";
-ConstructMcKayDiagram::usage="ConstructMcKayDiagram[phimax_,Nm_,m_,ListRays_] constructs the quiver scattering diagram with height up to phimax, scattering products up to (Nm,Nm) at each intersection; m is assumed to be real; The output consists of a list of  {charge, {x,y}, parent1, parent2,n1,n2 }; If ListRays is not empty, then uses it as initial rays.";
+ConstructMcKayDiagram::usage="ConstructMcKayDiagram[phimax_,m_,ListRays_] constructs the quiver scattering diagram with height up to phimax, scattering products up to n1+n2<=Nm at each intersection; m is assumed to be real; The output consists of a list of  {charge, {x,y}, parent1, parent2,n1,n2 }; If ListRays is not empty, then uses it as initial rays.";
 McKayTreesFromListRays::usage="McKayTreesFromListRays[ListRays_,{n1_,n2_,n3_,n4_},m_] extracts the list of distinct trees with given dimension vector  ";
 
 
@@ -164,6 +167,7 @@ sttoxy::usage = "sttoxy[{s_,t_},m:0]:={s,-1/2(m s+s^2-t^2)}";
 Rayxy::usage = "Rayxy[{r_,d1_,d2_,ch2_},x_,L_,m_] gives Graphics directive for ray starting from (x,?) if r<>0, or (?,x) if r=0, extending by distance L"; 
 IntersectRays::usage = "IntersectRays[{r_,d1_,d2_,ch2_},{rr_,dd1_,dd2_,cch2_},m_] returns intersection point (x,y) of two rays, or {} if they are collinear;
   IntersectRays[{r_,d1_,d2_,ch2_},{rr_,dd1_,dd2_,cch2_},z_,zz_,m_]returns intersection point (x,y) of two rays if the intersection point lies upward from z and z', or {} otherwise";  
+IntersectRaysNoTest::usage = "IntersectRays[{r_,d1_,d2_,ch2_},{rr_,dd1_,dd2_,cch2_},z_,zz_,m_]returns intersection point (x,y) of two rays if the intersection point lies strictly upward from z and z', or {} otherwise, without testing non-vanishing of DSZ product";  
 IntersectRaysSt::usage = "IntersectRaysSt[{r_,d1_,d2_,ch2_},{rr_,dd1_,dd2_,cch2_},psi_,m_] returns intersection point (s,t) for rotated scattering rays, or {} if they are collinear";
 InitialPosition::usage="InitialPosition[{r_,d1_,d2_,ch2_},m_] computes the s-value where the ray intersects the real axis"; 
 TestBranch::usage = "TestBranch[{r_,d1_,d2_,ch2_},s_]  tests if (s,.) is on the branch with ImZ>0";
@@ -279,6 +283,7 @@ XY::usage = "XY[tau_,psi_,m_] computes the coordinates {x,y} such that scatterin
 F1ToF0::usage = "F1ToF0[{r_,dH_,dC_,ch2_}]:={r,1/2(dH-dC),dH+dC,ch2}";
 F0ToF1::usage = "F0ToF1[{r_,d1_,d2_,ch2_}]:={r,d1+1/2 d2,-d1+1/2 d2,ch2}";
 repCh1::usage = "Replaces Ch1[mH_,mC_] by {1,mH,mC,1/2 (mH^2-mC^2)},GV[mH_,mC_,n_]:>{0,mH,mC,n}";
+ChernToCh1::usage="ChernToCh1[f_] replaces {r,dH,dC,ch2} by r Ch1[dH/r,dC/r] whenever the discriminant vanishes";
 DSZ1::usage = "DSZ1[gam1_,gam2_] computes the DSZ pairing between F1 Chern vectors";
 ZLV1::usage = "ZLV1[{r_,dH_,dC_,ch2_},{s_,t_},m_] gives the large volume central charge on local F1";
 Euler1::usage = "Euler1[{r_,dH_,dC_,ch2_},{rr_,ddH_,ddC_,cch2_}] computes the Euler form on D(F_1)";
@@ -298,6 +303,7 @@ Wall1::usage = "Wall1[{r_,dH_,dC_,ch2_},{rr_,ddH_,ddC_,cch2_},{s_,t_},m_] comput
 GenSlope1::usage = "GenSlope1[{r_,dH_,dC_,ch2_},m_] computes the slope (3dH+dC)/(4r) if r<>0, or s-value if r=0";
 IntersectRays1::usage = "IntersectRays1[{r_,dH_,dC_,ch2_},{rr_,ddH_,ddC_,cch2_},m_] returns intersection point (x,y) of two rays, or {} if they are collinear;
   IntersectRays1[{r_,dH_,dC_,ch2_},{rr_,ddH_,ddC_,cch2_},z_,zz_,m_]returns intersection point (x,y) of two rays if the intersection point lies upward from z and z', or {} otherwise";  
+IntersectRaysNoTest1::usage = "IntersectRays1[{r_,dH_,dC_,ch2_},{rr_,ddH_,ddC_,cch2_},z_,zz_,m_]returns intersection point (x,y) of two rays if the intersection point lies strictly upward from z and z', or {} otherwise, without testing non-vanishing of DSZ product";  
 IntersectRaysSt1::usage = "IntersectRaysSt1[{r_,dH_,dC_,ch2_},{rr_,ddH_,ddC_,cch2_},psi_,m_] returns intersection point (s,t) for rotated scattering rays, or {} if they are collinear";
 
 ScanConstituents1::usage = "ScanConstituents[gam_,{smin_,smax_},{n_,np_},m_,phimax_] searches possible list of constituents \[PlusMinus]O(k,k), \[PlusMinus]O(k+1,k) with slope in [smin,smax], number of D/Dbar constituents<=(n,np), cost function less than phimax and charges adding up to gam";
@@ -314,6 +320,10 @@ ScattSort1::usage = "ScattSort1[LiTree_,m_] sorts trees in LiTree by growing rad
 ScattIndex1::usage = "ScattIndex[TreeList_] computes the index for each tree in TreeList; do not trust the result if internal lines have non-primitive charges";
 ScattIndexInternal1::usage = "ScattIndexInternal[Tree_] computes {total charge, list of Kronecker indices associated to each vertex in Tree}";
 GCD1::usage="GCD1[gam_] gives the largest d such that gam/d belongs to the charge lattice";
+CostPhi1::usage="CostPhi1[{r_,dH_,dC_,ch2_},s_,m_]:=1/2(3dH+dC)-r(2s+m)";
+ConstructLVDiagram1::usage="ConstructLVDiagram1[smin_,smax_,phimax_,Nm_,m_,ListRays_] constructs the LV scattering diagram for F1 with initial rays in the interval [smin,smax], cost function up to phi, scattering products with n1+n2<=Nn at each intersection; m is assumed to be real; The output consists of a list of  {charge, {x,y}, parent1, parent2,n1,n2 }; If ListRays is not empty, then uses it as initial rays.";
+LVTreesFromListRays1::usage="lVTreesFromListRays1[ListRays_,{r_,dH_,dC_,ch2_},m_] extract the trees with given charge in the List of rays, constructed by ConstructLVDiagram1";
+
 
 
 Begin["`Private`"]
@@ -327,6 +337,7 @@ Disc[{rk_,c11_,c12_,ch2_}]:=-ch2/rk+c11 c12/rk^2;
 DSZ[{rk_,c11_,c12_,ch2_},{rrk_,cc11_,cc12_,cch2_}]:=2rk (cc11+cc12)-2 rrk (c11+c12);
 DimGieseker[{rk_,c11_,c12_,ch2_}]:=1+2 c11 c12-2 ch2 rk-rk^2;
 repCh={Ch[m1_,m2_][1]:>-{1,m1,m2,m1 m2},Ch[m1_,m2_]:>{1,m1,m2,m1 m2},GV[m1_,m2_,n_]:>{0,m1,m2,n}};
+ChernToCh[f_]:=f/.{{r_Integer,d1_Integer,d2_Integer,ch2_}:>If[r==0,GV[d1,d2,ch2],If[Disc[{r,d1,d2,ch2}]==0,If[r>0,r Ch[d1/r,d2/r],-r Ch[d1/r,d2/r][1]],{r,d1,d2,ch2}]]};
 
 MutateCollection[Coll_,klist_]:=Module[{Coll0,k,eps},
 (* Coll is a list of Chern vectors, klist a list of {node,\pm 1} *)
@@ -1621,7 +1632,7 @@ GV[0,1,k_]->{Ch[k,k-Floor[m]],Ch[k, k-Floor[m]-1][1]};
 
 ClearAll[KroneckerDims];
 KroneckerDims[m_,Nn_]:=KroneckerDims[m,Nn]=Module[{Ta={}},
-Do[If[m n1 n2-n1^2-n2^2+1>=0&&GCD[n1,n2]==1,AppendTo[Ta,{n1,n2}]],{n1,0,Nn},{n2,0,Nn}];Drop[Ta,2]];
+Do[If[m n1 n2-n1^2-n2^2+1>=0&&GCD[n1,n2]==1,AppendTo[Ta,{n1,n2}]],{n1,0,Nn},{n2,0,Nn-n1}];Drop[Ta,2]];
 
 ConstructLVDiagram[smin_,smax_,phimax_,Nm_,m_,ListRays0_]:=Module[
 {eps=.001,mi,mf,Inter,ListInter,ListRays,ListNewRays,kappa,KTab},
@@ -1656,19 +1667,29 @@ ListRays=Flatten[{ListRays,ListNewRays},1];
 Print[Length[ListRays], " in total."];
 ListRays];
 
+CostPhi[{r_,d1_,d2_,ch2_},s_,m_]:=d1+d2-r(2s+m);
+
+IntersectRaysNoTest[{r_,d1_,d2_,ch2_},{rr_,dd1_,dd2_,cch2_},z_,zz_,m_:1/2]:=
+(* returns (x,y) coordinate of intersection point of two rays, or {} if they don't intersect *)
+(* here do not test if DSZ<>0, and require strictly in future of z and zz *)
+Module[{zi},zi={-((-cch2 r+dd2 m r+ch2 rr-d2 m rr)/(dd1 r+dd2 r-d1 rr-d2 rr)),(-cch2 d1-cch2 d2+ch2 dd1+ch2 dd2-d2 dd1 m+d1 dd2 m)/(2 (dd1 r+dd2 r-d1 rr-d2 rr))};
+If[(zi-z) . {-2r,d1+d2-m r}>0&&(zi-zz) . {-2rr,dd1+dd2-m rr}>0,zi,{}]];
+
+
 
 
 (* Extract tree leading to k-th ray, internal *)
 TreeFromListRays[ListRays_,k_]:=If[ListRays[[k,3]]==0,ListRays[[k,1]],{ListRays[[k,5]]TreeFromListRays[ListRays,ListRays[[k,3]]],ListRays[[k,6]]TreeFromListRays[ListRays,ListRays[[k,4]]]}];
 (* Extract all trees leading to a ray with charge {r,d1,d2,ch2} *)
 
-LVTreesFromListRays[ListRays_,{r_,d1_,d2_,ch2_},m_]:=Module[{Lipos},
-Lipos=Position[ListRays,{r,d1,d2,ch2}];
+LVTreesFromListRays[ListRays_,{r_,d1_,d2_,ch2_},m_]:=Module[{Lipos,Div,LiTrees},
+Div=Divisors[GCD@@{r,d1,d2,ch2}];
+Lipos=Flatten[Join[Table[Position[ListRays,{r,d1,d2,ch2}/k],{k,Div}]],1];
 If[Lipos=={},
 Print["No such dimension vector in the list"],
-ScattSort[DeleteDuplicatesBy[TreeFromListRays[ListRays,#]&/@First[Transpose[Lipos]],ScattGraph[#,m]&],m]
-]
-];
+LiTrees=(GCD[r,d1,d2,ch2]/GCD@@ListRays[[#,1]])TreeFromListRays[ListRays,#]&/@First[Transpose[Lipos]];
+ScattSort[DeleteDuplicatesBy[SortBy[LiTrees,Length[TreeConstituents[#]]&],ScattGraph[#,m]&],m]
+]];
 
 IntersectRaysNoTest[{r_,d1_,d2_,ch2_},{rr_,dd1_,dd2_,cch2_},z_,zz_,m_:1/2]:=
 (* returns (x,y) coordinate of intersection point of two rays, or {} if they don't intersect *)
@@ -1851,7 +1872,7 @@ Li2=Select[Li,Length[McKayScattCheck[#,m][[2]]]>0&];
 DeleteDuplicatesBy[ReverseSortBy[Li2,Length],McKayScattGraph[#,m]&]];
 
 (* construct scattering diagram up to height phimax *)
-ConstructMcKayDiagram[phimax_,Nm_,m_,ListRays0_]:=Module[{ListRays,ListInter,kappa,Inter,KTab,ListNewRays},
+ConstructMcKayDiagram[phimax_,m_,ListRays0_]:=Module[{ListRays,ListInter,kappa,Inter,KTab,ListNewRays,Nm},
 If[ListRays0=={},
 (* initial rays {charge, {x,y}, parent1, parent2,n1,n2,level } *)
 ListRays=Table[{IdentityMatrix[4][[k]],InitialRaysOrigin[m][[k]]-5 McKayVec[IdentityMatrix[4][[k]]],0,0,0,0,1},{k,4}];
@@ -1867,6 +1888,7 @@ AppendTo[ListInter,{i,j}];
  kappa=McKayDSZ[ListRays[[i,1]],ListRays[[j,1]]];
 If[kappa!=0,Inter=McKayIntersectRaysNoTest[ListRays[[i,1]],ListRays[[j,1]],ListRays[[i,2]],ListRays[[j,2]],m];
 If[Inter!={},
+Nm=Floor[phimax/Min[Plus@@ListRays[[i,1]],Plus@@ListRays[[j,1]]]];
 KTab=KroneckerDims[Abs[kappa],Nm];
 Do[If[Plus@@(KTab[[k,1]] ListRays[[i,1]]+KTab[[k,2]]ListRays[[j,1]])<=phimax,
 AppendTo[ListNewRays,{KTab[[k,1]]ListRays[[i,1]]+KTab[[k,2]]ListRays[[j,1]],Inter,i,j,KTab[[k,1]],KTab[[k,2]],ListRays[[i,7]]+ListRays[[j,7]]}]],{k,Length[KTab]}]
@@ -1884,11 +1906,13 @@ McKayIntersectRaysNoTest[Nvec_,NNvec_,z_,zz_,m_]:=
 Module[{zi},zi=McKayIntersectRays[Nvec,NNvec,m];If[(zi-z) . McKayVec[Nvec]>0&&(zi-zz) . McKayVec[NNvec]>0,zi,{}]];
 
 (* Extract all trees leading up to a ray with dimension vector {n1,n2,n3,n4} *)
-McKayTreesFromListRays[ListRays_,{n1_,n2_,n3_,n4_},m_]:=Module[{Lipos},
-Lipos=Position[ListRays,{n1,n2,n3,n4}];
+McKayTreesFromListRays[ListRays_,{n1_,n2_,n3_,n4_},m_]:=Module[{Lipos,Div,LiTrees},
+Div=Divisors[GCD@@{n1,n2,n3,n4}];
+Lipos=Flatten[Join[Table[Position[ListRays,{n1,n2,n3,n4}/k],{k,Div}]],1];
 If[Lipos=={},
 Print["No such dimension vector in the list"],
-DeleteDuplicatesBy[TreeFromListRays[ListRays,#]&/@First[Transpose[Lipos]],McKayScattGraph[#,m]&]
+LiTrees=((n1+n2+n3+n4)/Plus@@ListRays[[#,1]])TreeFromListRays[ListRays,#]&/@First[Transpose[Lipos]];
+DeleteDuplicatesBy[SortBy[LiTrees,Length[TreeConstituents[#]]&],McKayScattGraph[#,m]&]
 ]];
 
 
@@ -2041,7 +2065,7 @@ ScattSort1[DeleteDuplicatesBy[Flatten[Select[Table[ListStableTrees1[Li[[i]],{s0,
 ScanConstituents1[gam_,{smin_,smax_},{n_,np_},m_,phimax_]:=Module[
 {eps=.001,Tabs,Tabsp,k,kp,Li,Lip,Lik,Likp,LiCompatible,LiConst,nc,i,ii,mi,mf},
 mi=Floor[m];mf=m-mi;
-If[m<0 || m>=1/4, Print["For now e assume 0<m<1/4 !"]];
+If[m<0 || m>=1/4, Print["For now we assume 0<m<1/4 !"]];
 (* allowed initial {position,charge,phi} *)
 Tabs=Reverse[Sort[Flatten[{
 	Table[{2k-1+eps,Ch1[3k-1,-k],1/2 m},{k,Ceiling[(smin+1)/2],Floor[(smax+1)/2]}],Table[{2k-m,Ch1[3k,-k],m},{k,Ceiling[(smin+m)/2],Floor[(smax+m)/2]}],
@@ -2221,6 +2245,66 @@ If[OptionValue["Debug"], Print["tem is: ", tem]];tem
 ];
 	(*If[GCD@@(S1[[1]]+S2[[1]])!=1,Print["Beware, non-primitive state"]];*)
 	{S1[[1]]+S2[[1]],Li}]];
+	
+ConstructLVDiagram1[smin_,smax_,phimax_,Nm_,m_,ListRays0_]:=Module[
+{eps=.001,mi,mf,Inter,ListInter,ListRays,ListNewRays,kappa,KTab},
+mi=Floor[m];mf=m-mi;
+(* initial rays {charge, {x,y}, parent1, parent2,n1,n2 } *)
+If[ListRays0=={},
+ListRays=Flatten[{
+Table[{Ch1[3k,-k],{2k-m/2,-2k^2},0,0,0,0,0},{k,Ceiling[(smin+m/2)/2],Floor[(smax+m/2)/2]}],
+Table[{Ch1[3k,-k][1],{2k-m/2,-2k^2},0,0,0,0,0},{k,Ceiling[(smin+m/2)/2],Floor[(smax+m/2)/2]}],
+Table[{Ch1[3k+1,-k-1],{2k+(1-m)/2,(m-1)/4-2k^2-k m-2k (1-m)/2},0,0,0,0,0},{k,Ceiling[(smin+(m-1)/2)/2],Floor[(smax+(m-1)/2)/2]}],
+Table[{Ch1[3k+1,-k-1][1],{2k+(1-m)/2,(m-1)/4-2 k^2-k m-2 k (1-m)/2},0,0,0,0,0},{k,Ceiling[(smin+(m-1)/2)/2],Floor[(smax+(m-1)/2)/2]}],
+Table[{Ch1[3k+1,-k],{2k+3/4-m/2,-m/8-5/16-2k^2-k m-2 k(3/4-m/2)},0,0,0,0,0},{k,Ceiling[(smin-3/4+m/2)/2],Floor[(smax-3/4+m/2)/2]}],
+Table[{Ch1[3k+1,-k][1],{2k+3/4-m/2,-m/8-5/16-2 k^2-k m-2 k(3/4-m/2)},0,0,0,0,0},{k,Ceiling[(smin-3/4+m/2)/2],Floor[(smax-3/4+m/2)/2]}],
+Table[{Ch1[3k+2,-k-1],{2k+5/4-m/2,m/8-13/16-2 k^2-k m-2k(5/4-m/2)},0,0,0,0,0},{k,Ceiling[(smin-5/4+m/2)/2],Floor[(smax-5/4+m/2)/2]}],
+Table[{Ch1[3k+2,-k-1][1],{2k+5/4-m/2,m/8-13/16-2k^2-k m-2 k(5/4-m/2)},0,0,0,0,0},{k,Ceiling[(smin-5/4+m/2)/2],Floor[(smax-5/4+m/2)/2]}]
+},1]/.repCh1;
+   ListInter={};,
+(* If list of rays is already provided *)
+	ListRays=ListRays0;
+	ListInter=Select[Table[{ListRays[[i,3]],ListRays[[i,4]]},{i,Length[ListRays]}],First[#]>0&]];
+While[True,
+ListNewRays={};
+       Monitor[ Do[
+If[  !MemberQ[ListInter,{i,j}],
+AppendTo[ListInter,{i,j}];
+ kappa=DSZ1[ListRays[[i,1]],ListRays[[j,1]]];
+If[kappa!=0,Inter=IntersectRaysNoTest1[ListRays[[i,1]],ListRays[[j,1]],ListRays[[i,2]],ListRays[[j,2]],m];
+If[Inter!={},
+KTab=KroneckerDims[Abs[kappa],Nm];
+Do[If[CostPhi1[KTab[[k,1]] ListRays[[i,1]]+KTab[[k,2]]ListRays[[j,1]],Inter[[1]],m]<=phimax,
+AppendTo[ListNewRays,{KTab[[k,1]]ListRays[[i,1]]+KTab[[k,2]]ListRays[[j,1]],Inter,i,j,KTab[[k,1]],KTab[[k,2]]}]],{k,Length[KTab]}]
+]]]
+,{i,Length[ListRays]},{j,i+1,Length[ListRays]}],{i,j}];
+If[ListNewRays=={},Break[],
+Print["Adding ",Length[ListNewRays], " rays, "];
+ListRays=Flatten[{ListRays,ListNewRays},1];
+]];
+Print[Length[ListRays], " in total."];
+ListRays];
+
+CostPhi1[{r_,dH_,dC_,ch2_},s_,m_]:=(dC+3dH)/2-r(2s+m);
+
+IntersectRaysNoTest1[{r_,dH_,dC_,ch2_},{rr_,ddH_,ddC_,cch2_},z_,zz_,m_]:=
+(* returns (x,y) coordinate of intersection point of two rays, or {} if they don't intersect *)
+(* here do not test if DSZ<>0, and require strictly in future of z and zz *)
+Module[{zi},zi={(2 (cch2 r-ddC m r-ddH m r-ch2 rr+dC m rr+dH m rr))/(ddC r+3 ddH r-(dC+3 dH) rr),(ch2 (ddC+3 ddH)-cch2 (dC+3 dH)-2 dC ddH m+2 ddC dH m)/(2 ddC r+6 ddH r-2 (dC+3 dH) rr)};
+If[(zi-z) . {-2r,(dC+3dH)/2-m r}>0&&(zi-zz) . {-2rr,(ddC+3ddH)/2-m rr}>0,zi,{}]];
+
+(* Extract all trees leading to a ray with charge {r,d,chi} *)
+LVTreesFromListRays1[ListRays_,{r_,dH_,dC_,ch2_},m_]:=Module[{Lipos,Div,LiTrees},
+Div=Divisors[GCD1[{r,dH,dC,ch2}]];
+Lipos=Flatten[Join[Table[Position[ListRays,{r,dH,dC,ch2}/k],{k,Div}]],1];
+If[Lipos=={},
+Print["No such dimension vector in the list"],
+LiTrees=(GCD1[{r,dH,dC,ch2}]/GCD1[ListRays[[#,1]]])TreeFromListRays[ListRays,#]&/@First[Transpose[Lipos]];
+ScattSort1[DeleteDuplicatesBy[SortBy[LiTrees,Length[TreeConstituents[#]]&],ScattGraph1[#,m]&],m]
+]];
+
+ChernToCh1[f_]:=f/.{{r_Integer,dH_Integer,dC_Integer,ch2_}:>If[r==0,GV1[dH,dC,ch2],If[Disc1[{r,dH,dC,ch2}]==0,If[r>0,r Ch1[dH/r,dC/r],-r Ch1[dH/r,dC/r][1]],{r,dH,dC,ch2}]]};	
+	
 	
 (* precomputed sequences for m=1/4 *)
 LVTreesF1[{1,2,1,3/2}]={{{Ch1[-2,0][1],Ch1[-2,1]},{Ch1[2,-1],{Ch1[1,-1][1],Ch1[1,0]}}}};
